@@ -1,0 +1,23 @@
+.container {
+  display: grid;
+  grid-template-columns:  repeat(3, 150px);
+  grid-template-rows: repeat(3, 150px);
+}
+
+.tile {
+  background: lightgray;
+  border-bottom: 1px solid black;
+  border-right: 1px solid black;
+}
+
+.tile:nth-child(3),
+.tile:nth-child(6),
+.tile:nth-child(9) {
+  border-right: none;
+}
+
+.tile:nth-child(7),
+.tile:nth-child(8),
+.tile:nth-child(9) {
+  border-bottom: none;
+}
