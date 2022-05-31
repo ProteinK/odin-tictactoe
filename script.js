@@ -1,10 +1,12 @@
 const gameBoard = (() => {
-  let _tiles = [];
+  let _tiles = [[], [], []];
+  let _currentTile = 0;
 
   const getTiles = () => _tiles;
   const getTile = index => _tiles[index];
   const addTile = tile => {
-    _tiles.push(tile);
+    _tiles[Math.floor(_currentTile / 3)].push(tile);
+    _currentTile++;
   }
 
   return { getTiles, getTile, addTile };
@@ -23,7 +25,7 @@ const Tile = element => {
   };
 
   _element.addEventListener('click', e => {
-    if (_marked) {
+    if (_marked || !game.isRunning()) {
       return;
     }
 
@@ -47,6 +49,8 @@ const game = (() => {
   let _currentPlayer = null;
   const _players = [];
   let _turn = 0;
+  let _winner = undefined;
+  let _running = false;
 
   const getCurrentPlayer = () => {
     return _currentPlayer;
@@ -72,14 +76,69 @@ const game = (() => {
     _players.push(p2);
 
     _currentPlayer = _players[0];
+    _running = true;
+  };
+
+  const _checkRow = row => {
+    if (row[0].getState() === '') {
+      return false;
+    }
+    return row[0].getState() === row[1].getState() && row[1].getState() === row[2].getState();
+  }
+
+  const _isGameEnd = () => {
+    for (let i = 0; i < 3; i++) {
+      let row = gameBoard.getTiles()[i];
+      if (_checkRow(row)) {
+        _winner = row[0];
+        return true;
+      }
+    }
+
+    // transpose array to switch columns with rows
+    let array = gameBoard.getTiles();
+    let transposed = array[0].map((_, colIndex) => array.map(row => row[colIndex]));
+
+    for (let i = 0; i < 3; i++) {
+      let row = transposed[i];
+      if (_checkRow(row)) {
+        _winner = row[0];
+        return true;
+      }
+    }
+
+    if (_turn === 9) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const _endGame = () => {
+    _running = false;
+    if (_winner === undefined) {
+      console.log('nobody won');
+    } else {
+      console.log(_winner.getState() + ' won');
+    }
   };
 
   const nextTurn = () => {
     _turn++;
+
+    if (_isGameEnd()) {
+      _endGame();
+      return;
+    }
+
     _currentPlayer = _players[_turn % 2];
   };
 
-  return { setupBoard, start, getCurrentPlayer, nextTurn };
+  const isRunning = () => {
+    return _running;
+  };
+
+  return { setupBoard, start, getCurrentPlayer, nextTurn, isRunning };
 })();
 
 game.setupBoard();
