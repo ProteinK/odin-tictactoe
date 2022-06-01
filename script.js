@@ -25,7 +25,7 @@ const Tile = element => {
   };
 
   _element.addEventListener('click', e => {
-    if (_marked || !game.isRunning()) {
+    if (_marked || !game.isRunning() || game.isOver()) {
       return;
     }
 
@@ -34,23 +34,34 @@ const Tile = element => {
     _marked = true;
   });
 
-  return { getState, setState };
+  const reset = () => {
+    _state = '';
+    _element.textContent = '';
+    _marked = false;
+  };
+
+  return { getState, setState, reset };
 };
 
-const Player = mark => {
+const Player = (mark, name) => {
   const getMark = () => {
     return mark;
   };
 
-  return { getMark };
+  const getName = () => {
+    return name;
+  };
+
+  return { getMark, getName };
 };
 
 const game = (() => {
   let _currentPlayer = null;
-  const _players = [];
+  let _players = [];
   let _turn = 0;
   let _winner = undefined;
   let _running = false;
+  let _over = false;
 
   const getCurrentPlayer = () => {
     return _currentPlayer;
@@ -67,12 +78,39 @@ const game = (() => {
       const tile = Tile(div);
       gameBoard.addTile(tile);
     }
+
+    const startButton = document.querySelector('#start');
+    startButton.addEventListener('click', e => {
+      const p1Name = document.querySelector('#player1').value || 'Player 1';
+      const p2Name = document.querySelector('#player2').value || 'Player 2';
+      if (_running || _over) {
+        _restart(p1Name, p2Name);
+      } else {
+        _start(p1Name, p2Name);
+      }
+    });
   };
 
-  const start = () => {
-    const p1 = Player('X');
+  const _restart = (p1Name, p2Name) => {
+    _turn = 0;
+    _over = false;
+    _players = [];
+    const winnerH1 = document.querySelector('#winner');
+    winnerH1.textContent = '';
+    let tiles = gameBoard.getTiles();
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        let tile = tiles[i][j];
+        tile.reset();
+      }
+    }
+    _start(p1Name, p2Name);
+  };
+
+  const _start = (p1Name, p2Name) => {
+    const p1 = Player('X', p1Name);
     _players.push(p1);
-    const p2 = Player('O');
+    const p2 = Player('O', p2Name);
     _players.push(p2);
 
     _currentPlayer = _players[0];
@@ -102,7 +140,7 @@ const game = (() => {
     for (let i = 0; i < 3; i++) {
       let row = transposed[i];
       if (_checkRow(row)) {
-        _winner = row[0];
+        _winner = _currentPlayer;
         return true;
       }
     }
@@ -115,12 +153,14 @@ const game = (() => {
   };
 
   const _endGame = () => {
+    const winnerH1 = document.querySelector('#winner');
     _running = false;
     if (_winner === undefined) {
-      console.log('nobody won');
+      winnerH1.textContent = "It's a tie!";
     } else {
-      console.log(_winner.getState() + ' won');
+      winnerH1.textContent = _winner.getName() + ' won';
     }
+    _over = true;
   };
 
   const nextTurn = () => {
@@ -138,8 +178,11 @@ const game = (() => {
     return _running;
   };
 
-  return { setupBoard, start, getCurrentPlayer, nextTurn, isRunning };
+  const isOver = () => {
+    return _over;
+  };
+
+  return { setupBoard, getCurrentPlayer, nextTurn, isRunning, isOver };
 })();
 
 game.setupBoard();
-game.start();
