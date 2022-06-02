@@ -211,12 +211,16 @@ const game = (() => {
     }
 
     let tiles = gameBoard.getTiles();
-    if (tiles[0][0].getState() === tiles[1][1].getState() && tiles[1][1].getState() === tiles[2][2].getState()) {
-      return true;
+    if (tiles[0][0].getState() !== '') {
+      if (tiles[0][0].getState() === tiles[1][1].getState() && tiles[1][1].getState() === tiles[2][2].getState()) {
+        return true;
+      }
     }
 
-    if (tiles[0][2].getState() === tiles[1][1].getState() && tiles[1][1].getState() === tiles[2][0].getState()) {
-      return true;
+    if (tiles[0][2].getState() !== '') {
+      if (tiles[0][2].getState() === tiles[1][1].getState() && tiles[1][1].getState() === tiles[2][0].getState()) {
+        return true;
+      }
     }
 
     return false;
