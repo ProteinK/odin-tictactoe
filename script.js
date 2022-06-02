@@ -3,13 +3,12 @@ const gameBoard = (() => {
   let _currentTile = 0;
 
   const getTiles = () => _tiles;
-  const getTile = index => _tiles[index];
   const addTile = tile => {
     _tiles[Math.floor(_currentTile / 3)].push(tile);
     _currentTile++;
   }
 
-  return { getTiles, getTile, addTile };
+  return { getTiles, addTile };
 })();
 
 const Tile = element => {
@@ -19,20 +18,22 @@ const Tile = element => {
 
   const getState = () => _state;
 
-  const setState = state => {
+  const _setState = state => {
     _state = state;
     _element.textContent = _state;
   };
 
-  _element.addEventListener('click', e => {
+  const mark = () => {
     if (_marked || !game.isRunning() || game.isOver()) {
       return;
     }
 
-    setState(game.getCurrentPlayer().getMark());
-    game.nextTurn();
+    _setState(game.getCurrentPlayer().getMark());
     _marked = true;
-  });
+    game.nextTurn();
+  };
+
+  _element.addEventListener('click', mark);
 
   const reset = () => {
     _state = '';
@@ -40,7 +41,7 @@ const Tile = element => {
     _marked = false;
   };
 
-  return { getState, setState, reset };
+  return { getState, reset, mark };
 };
 
 const Player = (mark, name) => {
@@ -55,6 +56,30 @@ const Player = (mark, name) => {
   return { getMark, getName };
 };
 
+const bot = (() => {
+  const _getRandomTile = () => {
+    let unmarkedTiles = [];
+
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        let tile = gameBoard.getTiles()[i][j];
+        if (tile.getState() === '') {
+          unmarkedTiles.push(tile);
+        }
+      }
+    }
+
+    return unmarkedTiles[Math.floor(Math.random() * unmarkedTiles.length)];
+  };
+
+  const move = () => {
+    let tile = _getRandomTile();
+    tile.mark();
+  };
+
+  return { move };
+})();
+
 const game = (() => {
   let _currentPlayer = null;
   let _players = [];
@@ -62,6 +87,7 @@ const game = (() => {
   let _winner = undefined;
   let _running = false;
   let _over = false;
+  let _AI = false;
 
   const getCurrentPlayer = () => {
     return _currentPlayer;
@@ -115,6 +141,8 @@ const game = (() => {
 
     _currentPlayer = _players[0];
     _running = true;
+
+    _AI = document.querySelector('#AI').checked;
   };
 
   const _checkRow = row => {
@@ -128,7 +156,7 @@ const game = (() => {
     for (let i = 0; i < 3; i++) {
       let row = gameBoard.getTiles()[i];
       if (_checkRow(row)) {
-        _winner = row[0];
+        _winner = _currentPlayer;
         return true;
       }
     }
@@ -172,6 +200,9 @@ const game = (() => {
     }
 
     _currentPlayer = _players[_turn % 2];
+    if (_AI && _turn % 2 === 1) {
+      bot.move();
+    }
   };
 
   const isRunning = () => {
