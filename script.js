@@ -18,7 +18,7 @@ const Tile = element => {
 
   const getState = () => _state;
 
-  const _setState = state => {
+  const setState = state => {
     _state = state;
     _element.textContent = _state;
   };
@@ -28,7 +28,7 @@ const Tile = element => {
       return;
     }
 
-    _setState(game.getCurrentPlayer().getMark());
+    setState(game.getCurrentPlayer().getMark());
     _marked = true;
     game.nextTurn();
   };
@@ -41,7 +41,7 @@ const Tile = element => {
     _marked = false;
   };
 
-  return { getState, reset, mark };
+  return { getState, setState, reset, mark };
 };
 
 const Player = (mark, name) => {
@@ -72,11 +72,29 @@ const bot = (() => {
   }
 
   const _isLosingTile = t => {
+    t.setState(game.getPlayers()[0].getMark());
+    let result = false;
 
+    if (game.isGameEnd()) {
+      result = true;
+    }
+
+    t.reset();
+
+    return result;
   };
 
   const _isWinningTile = t => {
+    t.setState(game.getPlayers()[1].getMark());
+    let result = false;
 
+    if (game.isGameEnd()) {
+      result = true;
+    }
+
+    t.reset();
+
+    return result;
   };
 
   const _assignTileValues = () => {
@@ -94,17 +112,33 @@ const bot = (() => {
         value = 3;
       }
 
-      if (_isLosingTile(t)) {
+      if (_isLosingTile(tile)) {
         value = 5;
       }
 
-      if (_isWinningTile(t)) {
+      if (_isWinningTile(tile)) {
         value = 6;
       }
 
       return [tile, value];
     });
+
+    return valuedTiles;
   };
+
+  const _getMaxValueTile = tiles => {
+    let max;
+    let highest = 0;
+    tiles.forEach(t => {
+      let [tile, value] = t;
+      if (value > highest) {
+        highest = value;
+        max = tile;
+      }
+    });
+
+    return max;
+  }
 
   const _getRandomTile = () => {
     let unmarkedTiles = _getUnmarkedTiles();
@@ -112,7 +146,8 @@ const bot = (() => {
   };
 
   const move = () => {
-    let tile = _getRandomTile();
+    // let tile = _getRandomTile();
+    let tile = _getMaxValueTile(_assignTileValues());
     tile.mark();
   };
 
@@ -265,7 +300,11 @@ const game = (() => {
     return _over;
   };
 
-  return { setupBoard, getCurrentPlayer, nextTurn, isRunning, isOver, isGameEnd };
+  const getPlayers = () => {
+    return _players;
+  }
+
+  return { setupBoard, getCurrentPlayer, nextTurn, isRunning, isOver, isGameEnd, getPlayers };
 })();
 
 game.setupBoard();
