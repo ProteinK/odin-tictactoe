@@ -57,19 +57,58 @@ const Player = (mark, name) => {
 };
 
 const bot = (() => {
-  const _getRandomTile = () => {
+  const _getUnmarkedTiles = () => {
     let unmarkedTiles = [];
 
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         let tile = gameBoard.getTiles()[i][j];
         if (tile.getState() === '') {
-          unmarkedTiles.push(tile);
+          unmarkedTiles.push([tile, i, j]);
         }
       }
     }
+    return unmarkedTiles;
+  }
 
-    return unmarkedTiles[Math.floor(Math.random() * unmarkedTiles.length)];
+  const _isLosingTile = t => {
+
+  };
+
+  const _isWinningTile = t => {
+
+  };
+
+  const _assignTileValues = () => {
+    let unmarkedTiles = _getUnmarkedTiles();
+    let valuedTiles = unmarkedTiles.map(t => {
+      let [tile, i, j] = t;
+      // default value
+      let value = 2;
+
+      if (i === 1 && j === 1) {
+        // center
+        value = 4;
+      } else if ((i === 0 && j === 0) || (i === 0 && j === 2) || (i === 2 && j === 0) || (i === 2 && j === 2)) {
+        // corners
+        value = 3;
+      }
+
+      if (_isLosingTile(t)) {
+        value = 5;
+      }
+
+      if (_isWinningTile(t)) {
+        value = 6;
+      }
+
+      return [tile, value];
+    });
+  };
+
+  const _getRandomTile = () => {
+    let unmarkedTiles = _getUnmarkedTiles();
+    return unmarkedTiles[Math.floor(Math.random() * unmarkedTiles.length)][0];
   };
 
   const move = () => {
@@ -152,11 +191,10 @@ const game = (() => {
     return row[0].getState() === row[1].getState() && row[1].getState() === row[2].getState();
   }
 
-  const _isGameEnd = () => {
+  const isGameEnd = () => {
     for (let i = 0; i < 3; i++) {
       let row = gameBoard.getTiles()[i];
       if (_checkRow(row)) {
-        _winner = _currentPlayer;
         return true;
       }
     }
@@ -168,12 +206,16 @@ const game = (() => {
     for (let i = 0; i < 3; i++) {
       let row = transposed[i];
       if (_checkRow(row)) {
-        _winner = _currentPlayer;
         return true;
       }
     }
 
-    if (_turn === 9) {
+    let tiles = gameBoard.getTiles();
+    if (tiles[0][0].getState() === tiles[1][1].getState() && tiles[1][1].getState() === tiles[2][2].getState()) {
+      return true;
+    }
+
+    if (tiles[0][2].getState() === tiles[1][1].getState() && tiles[1][1].getState() === tiles[2][0].getState()) {
       return true;
     }
 
@@ -183,7 +225,7 @@ const game = (() => {
   const _endGame = () => {
     const winnerH1 = document.querySelector('#winner');
     _running = false;
-    if (_winner === undefined) {
+    if (_winner === null) {
       winnerH1.textContent = "It's a tie!";
     } else {
       winnerH1.textContent = _winner.getName() + ' won';
@@ -194,7 +236,13 @@ const game = (() => {
   const nextTurn = () => {
     _turn++;
 
-    if (_isGameEnd()) {
+    if (isGameEnd()) {
+      _winner = _currentPlayer;
+      _endGame();
+      return;
+    }
+    if (_turn === 9) {
+      _winner = null;
       _endGame();
       return;
     }
@@ -213,7 +261,7 @@ const game = (() => {
     return _over;
   };
 
-  return { setupBoard, getCurrentPlayer, nextTurn, isRunning, isOver };
+  return { setupBoard, getCurrentPlayer, nextTurn, isRunning, isOver, isGameEnd };
 })();
 
 game.setupBoard();
