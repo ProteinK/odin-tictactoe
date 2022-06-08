@@ -24,7 +24,12 @@ const Tile = element => {
   };
 
   const mark = () => {
-    if (_marked || !game.isRunning() || game.isOver()) {
+    if (_marked || game.isOver()) {
+      return;
+    }
+
+    if (!game.isRunning()) {
+      alert('Press the START button.');
       return;
     }
 
